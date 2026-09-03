@@ -1,0 +1,14 @@
+name: auth_data
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+resolution: workspace
+
+dependencies:
+  core_domain:
+  core_data:
+  auth_domain:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

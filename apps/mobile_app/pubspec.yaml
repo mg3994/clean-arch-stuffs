@@ -1,0 +1,31 @@
+name: mobile_app
+description: "Mobile Application Shell assembling LEGO feature modules."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+  flutter: ">=3.0.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  core_domain:
+  core_data:
+  core_ui:
+  auth_domain:
+  auth_data:
+  auth_presentation:
+  blog_domain:
+  blog_data:
+  blog_presentation:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

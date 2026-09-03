@@ -1,0 +1,22 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+server.matrix
+
+# Dart / Flutter
+.dart_tool/
+.pub-cache/
+.pub/
+build/
+
+# Android / iOS generated
+android/app/debug/
+android/app/release/
+ios/Runner.xcodeproj/

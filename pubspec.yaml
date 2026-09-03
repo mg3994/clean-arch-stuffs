@@ -1,0 +1,15 @@
+name: monorepo_root
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+workspace:
+  - apps/mobile_app
+  - packages/core/core_domain
+  - packages/core/core_data
+  - packages/core/core_ui
+  - packages/features/auth/auth_domain
+  - packages/features/auth/auth_data
+  - packages/features/auth/auth_presentation
+  - packages/features/blog/blog_domain
+  - packages/features/blog/blog_data
+  - packages/features/blog/blog_presentation

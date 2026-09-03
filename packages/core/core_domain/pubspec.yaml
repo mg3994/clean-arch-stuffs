@@ -1,0 +1,5 @@
+name: core_domain
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+resolution: workspace

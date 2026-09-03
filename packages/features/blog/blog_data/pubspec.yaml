@@ -1,0 +1,10 @@
+name: blog_data
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+resolution: workspace
+
+dependencies:
+  core_domain:
+  core_data:
+  blog_domain:
