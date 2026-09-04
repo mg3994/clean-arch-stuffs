@@ -23,7 +23,7 @@ Ensure code is placed in the correct package layer and prevent illegal cross-lay
 
 ---
 
-## Skill 2: SOLID Code Refactoring Guidelines
+## Skill 2: SOLID & Do's/Don'ts Code Refactoring Guidelines
 
 ### Checklist for Agents Generating Code
 1. **Single Responsibility (SRP)**:
@@ -35,15 +35,18 @@ Ensure code is placed in the correct package layer and prevent illegal cross-lay
 3. **Dependency Inversion (DIP)**:
    - Never instantiate concrete repositories directly inside presentation controllers or widgets.
    - Always inject repository abstractions via constructor parameters.
+4. **Context Safety**:
+   - Never call `Navigator.of(context)` directly inside `MaterialApp.home` widget builder without a `Builder` context wrapper or key-based navigation.
 
 ---
 
-## Skill 3: Workspace Dependency Resolver Skill
+## Skill 3: Shared Package Dependency Resolver Skill
 
-When adding new imports or dependencies:
-1. Always verify if the target package exists in `packages/` or `pubspec.yaml` workspace list.
-2. Add workspace members to package `pubspec.yaml` under `dependencies:` with empty version tags (`core_domain:`), relying on `resolution: workspace`.
-3. Run `dart pub get` at the root directory to refresh resolution across all packages simultaneously.
+When working with shared utility packages (`packages/shared/*`):
+1. Shared utility packages must remain domain-agnostic and must NEVER import feature packages (`packages/features/*`) or app shells (`apps/*`).
+2. Add shared packages to workspace root `pubspec.yaml` under `workspace:` list.
+3. Reference shared packages in member packages using `resolution: workspace` with an unversioned dependency name (e.g. `logger_service:`).
+4. Run `dart pub get` from root directory to refresh resolution across all workspace members.
 
 ---
 

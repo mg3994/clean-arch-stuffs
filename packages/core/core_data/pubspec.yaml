@@ -6,3 +6,4 @@ resolution: workspace
 
 dependencies:
   core_domain:
+  logger_service:

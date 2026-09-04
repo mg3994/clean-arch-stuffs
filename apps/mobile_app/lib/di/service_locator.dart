@@ -5,12 +5,14 @@ import 'package:blog_data/blog_data.dart';
 import 'package:blog_domain/blog_domain.dart';
 import 'package:blog_presentation/blog_presentation.dart';
 import 'package:core_data/core_data.dart';
+import 'package:logger_service/logger_service.dart';
 
 class ServiceLocator {
   static final ServiceLocator _instance = ServiceLocator._internal();
   factory ServiceLocator() => _instance;
   ServiceLocator._internal();
 
+  late final LoggerService loggerService;
   late final NetworkClient networkClient;
   late final AuthRepository authRepository;
   late final LoginUser loginUserUseCase;
@@ -21,7 +23,10 @@ class ServiceLocator {
   late final BlogController blogController;
 
   void setup() {
+    loggerService = ConsoleLoggerService(prefix: 'MOBILE_APP');
+
     networkClient = MockNetworkClient(
+      logger: loggerService,
       postHandler: (path, body) {
         if (path.contains('/auth/login')) {
           return {

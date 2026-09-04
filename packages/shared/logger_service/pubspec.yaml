@@ -1,0 +1,10 @@
+name: logger_service
+description: "Shared logging service package for Monorepo applications."
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+resolution: workspace
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

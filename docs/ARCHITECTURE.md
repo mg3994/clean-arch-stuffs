@@ -46,36 +46,45 @@ Each module/feature is separated into three decoupled layers across package boun
 
 ---
 
-## 2. SOLID Principles Applied in Monorepo Design
+## 2. Comprehensive Do's & Don'ts Guide
 
-- **Single Responsibility Principle (SRP)**:
-  - Each package has one responsibility (`auth_domain` defines auth rules; `auth_data` fetches auth data; `auth_presentation` renders auth UI).
-  - UseCases handle exactly one business action (e.g., `LoginUserUseCase`).
-- **Open/Closed Principle (OCP)**:
-  - Data sources and Repositories are interface-driven. To switch from REST to GraphQL or Firebase, add a new implementation in `*_data` without modifying `*_domain` or `*_presentation`.
-- **Liskov Substitution Principle (LSP)**:
-  - Mock and fake repositories seamlessly replace concrete implementations in testing because UI depends purely on repository abstractions.
-- **Interface Segregation Principle (ISP)**:
-  - Repositories expose only the methods required by feature use cases, rather than bloated god-interfaces.
-- **Dependency Inversion Principle (DIP)**:
-  - Domain does not depend on Data or Frameworks. Both Data and Presentation depend on Domain abstractions.
+### Clean Architecture & Layering
 
----
-
-## 3. DRY (Don't Repeat Yourself) Without Coupling
-
-To avoid duplication while maintaining isolation:
-1. Shared foundational contracts live in `core_domain` (e.g., `UseCase<Type, Params>`, `Failure`, `Either`/`Result`).
-2. Common network utilities, HTTP client contracts, and error handlers live in `core_data`.
-3. Design System, typography, colors, and reusable UI components live in `core_ui`.
-4. Domain entities and DTOs are kept separate:
-   - DTOs (Data Transfer Objects) handle JSON parsing in Data layer.
-   - Domain Entities represent immutable business models in Domain layer.
-   - Mappers convert between DTOs and Entities.
+| Category | DO ✅ | DON'T ❌ |
+| :--- | :--- | :--- |
+| **Domain Layer** | **DO** keep `*_domain` pure Dart. Keep zero framework or Flutter SDK imports. | **DON'T** import `package:flutter`, `dio`, `shared_preferences`, or data models into `*_domain`. |
+| **Domain Layer** | **DO** define repository contracts as abstract interfaces in `*_domain`. | **DON'T** write concrete database or network logic inside `*_domain`. |
+| **Data Layer** | **DO** use Data Transfer Objects (DTOs) with explicit mappers (`toEntity()`, `fromEntity()`). | **DON'T** leak API JSON keys or HTTP response structures directly into domain entities. |
+| **Data Layer** | **DO** implement domain repository interfaces inside `*_data`. | **DON'T** expose data sources or DTOs outside the `*_data` package. |
+| **Presentation Layer**| **DO** consume `UseCase` objects or domain entities in controllers and UI widgets. | **DON'T** import `*_data` packages or instantiate repository implementations in widgets. |
+| **Presentation Layer**| **DO** handle UI state transitions explicitly (e.g. loading, success, failure). | **DON'T** perform business logic or data transformation directly inside `Widget.build()`. |
+| **App Shell** | **DO** register repository implementations and UseCases in `apps/<shell>/lib/di/`. | **DON'T** duplicate dependency injection containers across individual feature packages. |
 
 ---
 
-## 4. LEGO Package Modular Monorepo Concept
+### SOLID Principles in Action
+
+| Principle | DO ✅ | DON'T ❌ |
+| :--- | :--- | :--- |
+| **Single Responsibility (SRP)** | **DO** write focused UseCases handling a single business action (e.g., `LoginUser`). | **DON'T** create bloated "God UseCases" or "God Services" containing dozens of unrelated methods. |
+| **Open/Closed (OCP)** | **DO** extend behavior by implementing new repository interfaces or data sources. | **DON'T** modify domain entities or contracts to support a new database or API payload format. |
+| **Liskov Substitution (LSP)** | **DO** ensure mock and fake repositories conform strictly to domain repository contracts. | **DON'T** throw `UnimplementedError` in repository methods used during production runtime. |
+| **Interface Segregation (ISP)**| **DO** create small, targeted repository contracts for specific feature boundaries. | **DON'T** force presentation modules to depend on huge interfaces with methods they do not use. |
+| **Dependency Inversion (DIP)** | **DO** depend on abstractions (`AuthRepository`). | **DON'T** depend directly on concrete classes (`AuthRepositoryImpl` or `DioRemoteDataSource`). |
+
+---
+
+### DRY (Don't Repeat Yourself) Guidelines
+
+| Aspect | DO ✅ | DON'T ❌ |
+| :--- | :--- | :--- |
+| **Shared Logic** | **DO** extract reusable failures, Result types, and UseCase interfaces into `core_domain`. | **DON'T** copy-paste `Result` or `Failure` classes into individual feature packages. |
+| **Design System** | **DO** define colors, typography, buttons, and inputs in `core_ui`. | **DON'T** re-define primary colors or custom buttons across multiple feature presentation packages. |
+| **DTO Mappers** | **DO** keep mapping logic in `*_data` (or extension methods on DTOs). | **DON'T** duplicate JSON parsing logic in widgets or state controllers. |
+
+---
+
+## 3. LEGO Package Modular Monorepo Concept
 
 In this approach, features are self-contained **LEGO bricks**:
 
@@ -89,6 +98,9 @@ packages/
   │   ├── core_domain
   │   ├── core_data
   │   └── core_ui
+  │
+  ├── shared/             # Modular external/internal shared service packages
+  │   └── logger_service/
   │
   └── features/           # Reusable feature LEGO blocks
       ├── auth/

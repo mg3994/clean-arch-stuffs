@@ -7,6 +7,7 @@ workspace:
   - packages/core/core_domain
   - packages/core/core_data
   - packages/core/core_ui
+  - packages/shared/logger_service
   - packages/features/auth/auth_domain
   - packages/features/auth/auth_data
   - packages/features/auth/auth_presentation
