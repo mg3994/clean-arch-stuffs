@@ -46,7 +46,75 @@ Each module/feature is separated into three decoupled layers across package boun
 
 ---
 
-## 2. Comprehensive Do's & Don'ts Guide
+## 2. End-to-End Data Flow Diagram
+
+```
+ [ USER ACTION ]
+        |
+        v
+ [ LoginScreen ] (Widget)
+        |
+        v calls login(email, password)
+ [ AuthController ] (State Notifier)
+        |
+        v executes LoginUser(LoginParams)
+ [ LoginUser ] (UseCase - Domain Layer)
+        |
+        v calls repository.login()
+ [ AuthRepositoryImpl ] (Data Layer)
+        |
+        +-----> [ AuthRemoteDataSource ] ---> (Network Client -> REST API)
+        |                 |
+        |                 v returns UserDto
+        +-----> [ AuthLocalDataSource ] ----> (Cache UserDto locally)
+        |                 |
+        |                 v UserDto.toDomain()
+        v returns Result<User> (Domain Entity)
+ [ AuthController ] Updates AuthState
+        |
+        v notifies listeners
+ [ LoginScreen ] Renders Success UI
+```
+
+---
+
+## 3. Cross-Feature Communication & Navigation Strategy
+
+When Feature A (`auth`) needs to trigger or navigate to Feature B (`blog`), **`auth_presentation` must NEVER import `blog_presentation` directly**.
+
+### Communication Patterns:
+
+#### Pattern 1: App Shell Callbacks / Router Delegation
+The feature widget exposes callbacks for navigation events. The **App Shell (`apps/mobile_app`)** handles navigation:
+```dart
+// Inside auth_presentation:
+class LoginScreen extends StatelessWidget {
+  final VoidCallback onLoginSuccess; // Callback delegated to shell
+  const LoginScreen({super.key, required this.onLoginSuccess});
+}
+
+// Inside apps/mobile_app/lib/main.dart:
+LoginScreen(
+  onLoginSuccess: () {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => BlogFeedScreen(...)),
+    );
+  },
+)
+```
+
+#### Pattern 2: Shared Domain Event Bus or Core Contracts
+If two features need to exchange state asynchronously (e.g. `auth` state changes affecting `cart` feature), expose a contract in `core_domain` or depend on a domain stream provided by DI:
+```dart
+// Shared contract in core_domain:
+abstract class UserSessionStream {
+  Stream<User?> get onSessionChanged;
+}
+```
+
+---
+
+## 4. Comprehensive Do's & Don'ts Guide
 
 ### Clean Architecture & Layering
 
@@ -84,7 +152,7 @@ Each module/feature is separated into three decoupled layers across package boun
 
 ---
 
-## 3. Layer-by-Layer Testing Strategy
+## 5. Layer-by-Layer Testing Strategy
 
 ```
 +------------------------------------------------------------------------------------+
@@ -99,12 +167,12 @@ Each module/feature is separated into three decoupled layers across package boun
 ```
 
 1. **Domain Tests**: Test business invariants, validation rules, and UseCase invocation logic against mock repositories. Fast, zero-dependency execution.
-2. **Data Tests**: Test DTO JSON deserialization, mapper conversions, and repository handling of network errors / HTTP status codes.
+2. **Data Tests**: Test DTO JSON deserialization, mapper conversions, local caching, and repository handling of network errors / HTTP status codes.
 3. **Presentation Tests**: Test state controller transitions (`initial -> loading -> loaded / error`) and widget rendering response to state updates.
 
 ---
 
-## 4. LEGO Package Modular Monorepo Concept
+## 6. LEGO Package Modular Monorepo Concept
 
 In this approach, features are self-contained **LEGO bricks**:
 

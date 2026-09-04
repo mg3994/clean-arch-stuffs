@@ -63,9 +63,13 @@ class ServiceLocator {
       },
     );
 
-    // Auth Module Wiring
+    // Auth Module Wiring with Local Cache
     final authRemoteDataSource = AuthRemoteDataSourceImpl(networkClient);
-    authRepository = AuthRepositoryImpl(remoteDataSource: authRemoteDataSource);
+    final authLocalDataSource = InMemoryAuthLocalDataSourceImpl();
+    authRepository = AuthRepositoryImpl(
+      remoteDataSource: authRemoteDataSource,
+      localDataSource: authLocalDataSource,
+    );
     loginUserUseCase = LoginUser(authRepository);
     authController = AuthController(loginUserUseCase);
 

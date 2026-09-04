@@ -17,15 +17,20 @@ class MockAuthRemoteDataSource implements AuthRemoteDataSource {
 
 void main() {
   late AuthRepositoryImpl repository;
-  late MockAuthRemoteDataSource mockDataSource;
+  late MockAuthRemoteDataSource mockRemoteDataSource;
+  late InMemoryAuthLocalDataSourceImpl localDataSource;
 
   setUp(() {
-    mockDataSource = MockAuthRemoteDataSource();
-    repository = AuthRepositoryImpl(remoteDataSource: mockDataSource);
+    mockRemoteDataSource = MockAuthRemoteDataSource();
+    localDataSource = InMemoryAuthLocalDataSourceImpl();
+    repository = AuthRepositoryImpl(
+      remoteDataSource: mockRemoteDataSource,
+      localDataSource: localDataSource,
+    );
   });
 
-  test('login returns User entity when remote data source returns UserDto', () async {
-    mockDataSource.dtoToReturn = UserDto(
+  test('login returns User entity when remote data source returns UserDto and caches it', () async {
+    mockRemoteDataSource.dtoToReturn = UserDto(
       id: 'usr_1',
       email: 'alex@example.com',
       name: 'Alex',
@@ -37,10 +42,14 @@ void main() {
     expect(result.isSuccess, true);
     expect(result.data, isA<User>());
     expect(result.data.email, 'alex@example.com');
+
+    final cachedUserResult = await repository.getCurrentUser();
+    expect(cachedUserResult.isSuccess, true);
+    expect(cachedUserResult.data?.email, 'alex@example.com');
   });
 
   test('login returns ServerFailure on exception', () async {
-    mockDataSource.shouldThrow = true;
+    mockRemoteDataSource.shouldThrow = true;
 
     final result = await repository.login(email: 'alex@example.com', password: 'password123');
 
