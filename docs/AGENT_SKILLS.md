@@ -40,13 +40,24 @@ Ensure code is placed in the correct package layer and prevent illegal cross-lay
 
 ---
 
-## Skill 3: Shared Package Dependency Resolver Skill
+## Skill 3: Agent Prompt Templates for Monorepo Operations
 
-When working with shared utility packages (`packages/shared/*`):
-1. Shared utility packages must remain domain-agnostic and must NEVER import feature packages (`packages/features/*`) or app shells (`apps/*`).
-2. Add shared packages to workspace root `pubspec.yaml` under `workspace:` list.
-3. Reference shared packages in member packages using `resolution: workspace` with an unversioned dependency name (e.g. `logger_service:`).
-4. Run `dart pub get` from root directory to refresh resolution across all workspace members.
+### Template 1: Generating a New Feature Block
+```markdown
+"Create a new feature '<feature_name>' in packages/features/<feature_name>/ divided into:
+1. <feature_name>_domain: pure Dart entity, repository contract, and use case.
+2. <feature_name>_data: DTO, remote data source, and repository implementation.
+3. <feature_name>_presentation: state controller and UI screen.
+Register all three packages in root pubspec.yaml workspace section and wire them in mobile_app service_locator."
+```
+
+### Template 2: Layer Violation Audit Prompt
+```markdown
+"Audit packages/features/<feature_name>/ for layer violations:
+- Check if <feature_name>_domain contains flutter or network imports.
+- Check if <feature_name>_presentation imports <feature_name>_data directly.
+- Report any architectural breaches and output required refactoring diffs."
+```
 
 ---
 

@@ -21,19 +21,15 @@ Starting with **Dart 3.5+**, Dart includes native **Workspace support**. This el
 └── packages/                    # Modular LEGO packages
     ├── core/                    # Core foundation packages
     │   ├── core_domain/
-    │   │   ├── pubspec.yaml
-    │   │   └── lib/             # Base Entities, Failures, UseCase contracts
     │   ├── core_data/
-    │   │   ├── pubspec.yaml
-    │   │   └── lib/             # Base Http client interfaces, Network DTO adapters
     │   └── core_ui/
-    │       ├── pubspec.yaml
-    │       └── lib/             # Design Tokens, Core Buttons, Input Fields, Themes
+    ├── shared/                  # Independent shared utility packages
+    │   └── logger_service/
     └── features/                # Domain-Driven Feature packages
         ├── auth/
-        │   ├── auth_domain/     # Auth Entities, ValueObjects, AuthRepository interface
-        │   ├── auth_data/       # AuthDTO, AuthRemoteDataSource, AuthRepositoryImpl
-        │   └── auth_presentation/# LoginScreen, AuthController/Cubit, AuthState
+        │   ├── auth_domain/
+        │   ├── auth_data/
+        │   └── auth_presentation/
         └── blog/
             ├── blog_domain/
             ├── blog_data/
@@ -42,103 +38,68 @@ Starting with **Dart 3.5+**, Dart includes native **Workspace support**. This el
 
 ---
 
-## 2. Pubspec Configuration Rules (Dart 3.5+ Workspaces)
+## 2. Monorepo Do's and Don'ts
 
-### A. Root `pubspec.yaml`
-The root pubspec defines the workspace members and minimum SDK requirement.
-
-```yaml
-name: monorepo_root
-environment:
-  sdk: '>=3.5.0 <4.0.0'
-
-workspace:
-  - apps/mobile_app
-  - packages/core/core_domain
-  - packages/core/core_data
-  - packages/core/core_ui
-  - packages/features/auth/auth_domain
-  - packages/features/auth/auth_data
-  - packages/features/auth/auth_presentation
-  - packages/features/blog/blog_domain
-  - packages/features/blog/blog_data
-  - packages/features/blog/blog_presentation
-```
-
-### B. Workspace Member `pubspec.yaml`
-Every package in the workspace must declare `resolution: workspace`. Intra-workspace dependencies are declared without version specifiers.
-
-Example for `packages/features/auth/auth_data/pubspec.yaml`:
-```yaml
-name: auth_data
-environment:
-  sdk: '>=3.5.0 <4.0.0'
-
-resolution: workspace
-
-dependencies:
-  core_domain:
-  core_data:
-  auth_domain:
-```
-
-Example for `packages/features/auth/auth_presentation/pubspec.yaml`:
-```yaml
-name: auth_presentation
-environment:
-  sdk: '>=3.5.0 <4.0.0'
-  flutter: ">=3.0.0"
-
-resolution: workspace
-
-dependencies:
-  flutter:
-    sdk: flutter
-  core_domain:
-  core_ui:
-  auth_domain:
-```
-
-Example for `apps/mobile_app/pubspec.yaml`:
-```yaml
-name: mobile_app
-environment:
-  sdk: '>=3.5.0 <4.0.0'
-  flutter: ">=3.0.0"
-
-resolution: workspace
-
-dependencies:
-  flutter:
-    sdk: flutter
-  core_domain:
-  core_data:
-  core_ui:
-  auth_domain:
-  auth_data:
-  auth_presentation:
-  blog_domain:
-  blog_data:
-  blog_presentation:
-```
-
----
-
-## 3. Layer Dependency Matrix
-
-| Package Category | Can Depend On | MUST NOT Depend On |
+| Category | DO ✅ | DON'T ❌ |
 | :--- | :--- | :--- |
-| `core_domain` | Pure Dart packages | `core_data`, `core_ui`, Features, Flutter SDK |
-| `core_data` | `core_domain`, Dio/Http | `core_ui`, Feature packages, Flutter SDK |
-| `core_ui` | `core_domain`, Flutter SDK | `core_data`, Feature data/domain packages |
-| `<feature>_domain` | `core_domain` | `<feature>_data`, `<feature>_presentation`, Flutter SDK |
-| `<feature>_data` | `core_domain`, `core_data`, `<feature>_domain` | `<feature>_presentation`, Flutter SDK |
-| `<feature>_presentation` | `core_domain`, `core_ui`, `<feature>_domain`, Flutter SDK | `<feature>_data` |
-| `apps/*` (App Shell) | All `core_*` and `<feature>_*` packages | None (App Shell is the assembler) |
+| **Workspace Setup** | **DO** register every package path in the root `pubspec.yaml` `workspace:` section. | **DON'T** use legacy relative `path:` dependencies between packages inside the same workspace. |
+| **Dependencies** | **DO** set `resolution: workspace` in all workspace member packages. | **DON'T** specify version constraints (`^1.0.0`) for internal workspace dependencies. |
+| **Imports** | **DO** import workspace packages using `package:<pkg_name>/<file>.dart`. | **DON'T** use relative cross-package imports (e.g. `import '../../core_domain/lib/...'`). |
+| **Cleanliness** | **DO** commit `.gitignore` excluding `.dart_tool/`, `.pub/`, and `build/`. | **DON'T** commit generated build artifacts or local cache folders to git tracking. |
+| **Task Execution**| **DO** run `dart pub get` from the root directory to resolve dependencies across all packages at once. | **DON'T** run `dart pub get` manually inside 15 different directories sequentially. |
 
 ---
 
-## 4. How to Add a New Feature Module (Step-by-Step)
+## 3. Native Workspaces vs. Melos Comparison
+
+| Feature | Native Dart Workspaces (Dart 3.5+) | Melos |
+| :--- | :--- | :--- |
+| **Dependency Resolution** | Native single lockfile (`pubspec.lock` at root) | Synthesizes symlinks or path overrides |
+| **Setup Overhead** | Zero extra tools needed (built into Dart/Flutter SDK) | Requires global pub install of `melos` |
+| **Script Automation** | Run standard `dart` / `flutter` CLI commands | Custom `melos.yaml` script runners |
+| **IDE Support** | Native out-of-the-box support in VS Code & Android Studio | Requires Melos extension/plugin |
+| **Best Choice For** | Modern Flutter/Dart monorepos (Dart 3.5+) | Legacy monorepos or repos needing custom bash scripts |
+
+---
+
+## 4. CI/CD Pipeline Guidelines for Workspaces
+
+In GitHub Actions, GitLab CI, or Codemagic:
+
+```yaml
+name: Monorepo CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  analyze_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Resolve Workspace Dependencies
+        run: dart pub get
+
+      - name: Run Workspace Static Analysis
+        run: flutter analyze
+
+      - name: Run All Workspace Unit Tests
+        run: |
+          find packages apps -name "*_test.dart" | xargs flutter test
+```
+
+---
+
+## 5. How to Add a New Feature Module (Step-by-Step)
 
 1. **Create Feature Packages**:
    - Create directory `packages/features/<feature_name>/`

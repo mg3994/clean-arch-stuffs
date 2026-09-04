@@ -1,7 +1,7 @@
 # Monorepo Strategy for External & Shared Packages
 
 ## Overview
-In a enterprise monorepo, applications often rely on utility libraries, network clients, logging infrastructures, design tokens, and shared contracts.
+In an enterprise monorepo, applications often rely on utility libraries, network clients, logging infrastructures, design tokens, and shared contracts.
 
 This document outlines the **Monorepo Approach for Shared Packages**—explaining how to structure, version, consume, and distribute shared libraries without introducing tight coupling or dependency cycles.
 
@@ -30,7 +30,18 @@ packages/
 
 ---
 
-## 2. Monorepo vs. External Pub Publishing Strategy
+## 2. Shared Packages Do's and Don'ts
+
+| Category | DO ✅ | DON'T ❌ |
+| :--- | :--- | :--- |
+| **Coupling** | **DO** keep shared utility packages domain-agnostic and feature-agnostic. | **DON'T** import feature packages (`packages/features/*`) or app shells into `packages/shared/*`. |
+| **Dependencies** | **DO** wrap third-party libraries (e.g. `dio`, `logger`, `hive`) inside shared package abstractions. | **DON'T** leak raw third-party classes across the entire codebase; expose clean interface contracts. |
+| **Exports** | **DO** export public interfaces via `lib/<pkg_name>.dart`. Keep internals in `lib/src/`. | **DON'T** allow consumers to directly import private files from `lib/src/`. |
+| **Cycles** | **DO** keep shared package dependency trees acyclic and flat. | **DON'T** create circular dependencies between `shared` packages (e.g. `pkg_a` depending on `pkg_b` and vice-versa). |
+
+---
+
+## 3. Monorepo vs. External Pub Publishing Strategy
 
 Shared packages can be maintained in two modes:
 
@@ -67,16 +78,6 @@ Shared packages can be maintained in two modes:
     company_logger:
       path: ../../external_repos/company_logger
   ```
-
----
-
-## 3. Dependency Rules for Shared Packages
-
-To prevent dependency hell and cycle loops:
-
-1. **Rule of Low Coupling**: `packages/shared/*` MUST NOT depend on `packages/features/*` or `apps/*`.
-2. **Rule of No Framework Spill**: Shared utility packages should depend on as few third-party libraries as possible. Wrap external packages (e.g. wrap `talker` or `logger` inside `logger_service`).
-3. **Rule of Interface Abstraction**: Other packages depend on abstract contracts provided by shared packages, allowing underlying implementations (e.g. switching from Console Logger to Sentry/Datadog) to be swapped cleanly.
 
 ---
 

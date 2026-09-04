@@ -84,7 +84,27 @@ Each module/feature is separated into three decoupled layers across package boun
 
 ---
 
-## 3. LEGO Package Modular Monorepo Concept
+## 3. Layer-by-Layer Testing Strategy
+
+```
++------------------------------------------------------------------------------------+
+| Layer                 | Test Type               | Tooling                          |
++------------------------------------------------------------------------------------+
+| Presentation Layer    | Widget & Controller     | flutter_test, Mocktail/Mockito    |
+| Domain Layer          | Unit Tests (Pure Dart)  | test / flutter_test              |
+| Data Layer            | Unit & Data Source      | test / flutter_test, MockAdapter |
+| Shared Utilities      | Unit Tests              | test / flutter_test              |
+| App Shell Integration | Integration Tests       | integration_test                 |
++------------------------------------------------------------------------------------+
+```
+
+1. **Domain Tests**: Test business invariants, validation rules, and UseCase invocation logic against mock repositories. Fast, zero-dependency execution.
+2. **Data Tests**: Test DTO JSON deserialization, mapper conversions, and repository handling of network errors / HTTP status codes.
+3. **Presentation Tests**: Test state controller transitions (`initial -> loading -> loaded / error`) and widget rendering response to state updates.
+
+---
+
+## 4. LEGO Package Modular Monorepo Concept
 
 In this approach, features are self-contained **LEGO bricks**:
 
